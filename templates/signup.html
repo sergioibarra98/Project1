@@ -1,0 +1,41 @@
+{% extends "layout.html" %}
+
+{% block title %}Booksland{% endblock %}
+
+{% block style %}
+{% endblock %}
+
+{% block body %}
+    <nav>
+        <div class="nav-wrapper teal lighten-2">
+            <a style="padding-left: 10px" class="brand-logo">Booksland</a>
+        </div>
+    </nav>
+
+    <div id="access" class="container">
+        <div class="row">
+            <div class="col s12 m12 l6 xl4 offset-l3 offset-xl4">
+                <div class="card teal darken-1 z-depth-5">
+                    <form action="{{ url_for('checkRegister') }}" method="post">
+                        <div class="card-tabs">
+                            <ul class="tabs tabs-fixed-width tabs-transparent">
+                                <li class="tab"><a href="{{ url_for('login') }}">Log in</a></li>
+                                <li class="tab"><a class="active">Sign up</a></li>
+                            </ul>
+                        </div>
+                        <div class="card-content grey lighten-4">
+                            <h5>REGISTER</h5>
+                            <input name="email" placeholder="Your email" type="text" class="validate">
+                            <input name="username" placeholder="Choose a username" type="text" class="validate">
+                            <input name="password" placeholder="Create a password" type="password" class="validate">
+                        </div>
+                        <div class="card-action grey lighten-4">
+                            <button class="waves-effect waves-light btn teal darken-1"><i class="material-icons right">send</i>DONE</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
