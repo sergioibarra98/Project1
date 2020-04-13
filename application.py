@@ -5,6 +5,9 @@ from flask_session import Session
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
 
+user_id = -1
+username= ""
+
 app = Flask(__name__)
 
 # Check for environment variable
@@ -25,7 +28,7 @@ db = scoped_session(sessionmaker(bind=engine))
 def login():
     return render_template("login.html")
 
-@app.route("/home/1", methods=["post"])
+@app.route("/home", methods=["post"])
 def home():
     accounts = db.execute("SELECT * FROM accounts").fetchall()
     books = db.execute("SELECT * FROM books ORDER BY title ASC LIMIT 10").fetchall()
@@ -33,38 +36,73 @@ def home():
     #Get the data account
     user = request.form.get("user")
     password = request.form.get("password")
+    page = 0
 
     for account in accounts:
         if ((account.email==user or account.username==user) and account.password==password):
-            return render_template("home.html",username=account.username, books=books)
+            user_id=account.id
+            username=account.username
+            return render_template("home.html", username=username, books=books)
 
     return render_template("alert.html", message="User or password incorrect")
 
-@app.route("/search", methods=["post"])
+@app.route("/home/search", methods=["post"])
 def search():
-    isbn = request.form.get("isbn")
+
     title = request.form.get("title")
     author = request.form.get("author")
     year = request.form.get("year")
-
-    if isbn != "":
-        if title != "":
-            if author != "":
-                if year != 0:
-                    books = db.execute("SELECT * FROM books").fetchall()
-
+    isbn = request.form.get("isbn")
 
     if title != "":
         if author != "":
-            if year != 0:
-                books = db.execute("SELECT * FROM books").fetchall()
+            if year != "":
+                if isbn != 0:
+                    title1 = "%"+title+"%"
+                    title2 = "%"+title.capitalize()+"%"
+                    author1 = "%"+author.capitalize()+"%"
+                    books = db.execute("SELECT * FROM books WHERE (title LIKE :title1 OR title LIKE :title2) AND author LIKE :author AND year = :year AND isbn = :isbn LIMIT 10",{"title1": title, "title2": title2, "author": author1, "year": year, "isbn": isbn}).fetchall()
+                    return render_template("home.html", username=username, books=books, title=title, author=author, year=year, isbn=isbn)
+                title1 = "%"+title+"%"
+                title2 = "%"+title.capitalize()+"%"
+                author1 = "%"+author.capitalize()+"%"
+                books = db.execute("SELECT * FROM books WHERE (title LIKE :title1 OR title LIKE :title2) AND author LIKE :author AND year = :year LIMIT 10",{"title1": title, "title2": title2, "author": author1, "year": year}).fetchall()
+                return render_template("home.html", username=username, books=books, title=title, author=author, year=year)
+            title1 = "%"+title+"%"
+            title2 = "%"+title.capitalize()+"%"
+            author1 = "%"+author.capitalize()+"%"
+            books = db.execute("SELECT * FROM books WHERE (title LIKE :title1 OR title LIKE :title2) AND author LIKE :author LIMIT 10",{"title1": title, "title2": title2, "author": author1}).fetchall()
+            return render_template("home.html", username=username, books=books, title=title, author=author)
+        title1 = "%"+title+"%"
+        title2 = "%"+title.capitalize()+"%"
+        books = db.execute("SELECT * FROM books WHERE title LIKE :title1 OR title LIKE :title2 LIMIT 10",{"title1": title, "title2":title2}).fetchall()
+        return render_template("home.html", username=username, books=books, title=title)
+
 
     if author != "":
-        if year != 0:
-            books = db.execute("SELECT * FROM books").fetchall()
+        if year != "":
+            if isbn != 0:
+                author1 = "%"+author.capitalize()+"%"
+                books = db.execute("SELECT * FROM books WHERE author LIKE :author AND year = :year AND isbn = :isbn", {"author": author1, "year": year, "isbn": isbn}).fetchall()
+                return render_template("home.html", username=username, books=books, author=author, year=year, isbn=isbn)
+            author1 = "%"+author.capitalize()+"%"
+            books = db.execute("SELECT * FROM books WHERE author LIKE :author AND year = :year", {"author": author1, "year": year}).fetchall()
+            return render_template("home.html", username=username, books=books, author=author, year=year)
+        author1 = "%"+author.capitalize()+"%"
+        books = db.execute("SELECT * FROM books WHERE author LIKE :author", {"author": author1}).fetchall()
+        return render_template("home.html", username=username, books=books, author=author)
 
-    if year != 0:
-        books = db.execute("SELECT * FROM books").fetchall()
+    if year != "":
+        if isbn != 0:
+            books = db.execute("SELECT * FROM books WHERE year = :year AND isbn = :isbn", {"year": year, "isbn": isbn}).fetchall()
+            return render_template("home.html", username=username, books=books, year=year, isbn=isbn)
+        year = int(year)
+        books = db.execute("SELECT * FROM books WHERE year = :year", {"year": year}).fetchall()
+        return render_template("home.html", username=username, books=books, year=year)
+
+    if isbn != 0:
+        books = db.execute("SELECT * FROM books WHERE isbn = :isbn", {"isbn": isbn}).fetchall()
+        return render_template("home.html", username=username, books=books, isbn=isbn)
 
 
 @app.route("/register")
