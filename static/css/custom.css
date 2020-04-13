@@ -22,3 +22,8 @@ body {
 #search ::placeholder {
     color: grey;
 }
+
+#results a i{
+    position: relative;
+    top: 5px;
+}

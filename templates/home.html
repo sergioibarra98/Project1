@@ -1,0 +1,116 @@
+{% extends "layout.html" %}
+
+{% block title %}Booksland{% endblock %}
+
+{% block head %}
+    <style>
+        @media (min-width: 994px) {
+            #filter i{
+                position: relative;
+                top: 25px;
+            }
+
+            #filter span {
+                position: relative;
+                top: 18px;
+            }
+        }
+
+        @media (max-width: 993px) {
+            #filter i{
+                position: relative;
+                top: 7px;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <nav>
+        <div class="nav-wrapper teal lighten-2">
+            <a style="padding-left: 10px; font-weight: bold" class="brand-logo">Booksland</a>
+            <ul id="nav-mobile" class="right hide-on-med-and-down">
+                <li><a href="#" style="font-weight: bold">{{username}}</a></li>
+                <li><a href="{{url_for('login')}}" style="font-weight: bold">Log out</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div id="search" class="container grey lighten-4 z-depth-5">
+        <div class="row">
+            <form action="{{url_for('search')}}" method="post">
+                <div class="row">
+                    <div class="input-field col s6 l3">
+                        <i class="material-icons prefix">book</i>
+                        <input name="title" type="text" class="validate" placeholder="title">
+                    </div>
+                    <div class="input-field col s6 l3">
+                        <i class="material-icons prefix">account_box</i>
+                        <input name="author" type="text" class="validate" placeholder="author">
+                    </div>
+                    <div class="input-field col s6 l3">
+                        <i class="material-icons prefix">update</i>
+                        <input name="year" type="number" class="validate" placeholder="year" min=1500 max=2020>
+                    </div>
+                    <div class="input-field col s6 l3">
+                        <i class="material-icons prefix">info_outline</i>
+                        <input name="isbn" type="text" class="validate" placeholder="isbn" style="opacity=1">
+                    </div>
+                </div>
+                <div class="row" style="margin-left: 16px">
+                    <button class="waves-effect waves-light btn teal darken-1"><i class="material-icons right">search</i>Search</button>
+                </div>
+            </form>
+        </div>
+
+        <div id="filter" class="row">
+            <div class="col l2 offset-l1 right-align">
+                <i class="material-icons small">equalizer</i>
+                <span>Filter by</span>
+            </div>
+            <div class="col s12 l2">
+                <label>Selected</label>
+                <select class="browser-default">
+                    <option value="1">Title</option>
+                    <option value="2">Author</option>
+                    <option value="3">Year</option>
+                </select>
+            </div>
+            <div class="col l2 right-align">
+                <i class="material-icons small">clear_all</i>
+                <span>Order by</span>
+            </div>
+            <div class="col s12 l2">
+                <label>Selected</label>
+                <select class="browser-default">
+                    <option value="1">Ascendent</option>
+                    <option value="2">Descendent</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="results"class="row">
+            <div class="col s12 l8 offset-l2">
+                <div class="collection">
+                    {% for book in books %}
+                        <a href="#!" class="collection-item"><i class="material-icons">import_contacts</i> Title: <b>{{book.title}}</b> by <b>{{book.author}}</b></a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col s12 center-align">
+                <ul class="pagination">
+                    <li class="disabled"><a href="#!"><i class="material-icons">chevron_left</i></a></li>
+                    <li class="active"><a href="#!">1</a></li>
+                    <li class="waves-effect"><a href="#!">2</a></li>
+                    <li class="waves-effect"><a href="#!">3</a></li>
+                    <li class="waves-effect"><a href="#!">4</a></li>
+                    <li class="waves-effect"><a href="#!">5</a></li>
+                    <li class="waves-effect"><a href="#!"><i class="material-icons">chevron_right</i></a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+{% endblock %}

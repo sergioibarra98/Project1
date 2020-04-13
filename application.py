@@ -25,9 +25,10 @@ db = scoped_session(sessionmaker(bind=engine))
 def login():
     return render_template("login.html")
 
-@app.route("/home", methods=["post"])
+@app.route("/home/1", methods=["post"])
 def home():
     accounts = db.execute("SELECT * FROM accounts").fetchall()
+    books = db.execute("SELECT * FROM books ORDER BY title ASC LIMIT 10").fetchall()
 
     #Get the data account
     user = request.form.get("user")
@@ -35,9 +36,35 @@ def home():
 
     for account in accounts:
         if ((account.email==user or account.username==user) and account.password==password):
-            return render_template("home.html",username=account.username)
+            return render_template("home.html",username=account.username, books=books)
 
     return render_template("alert.html", message="User or password incorrect")
+
+@app.route("/search", methods=["post"])
+def search():
+    isbn = request.form.get("isbn")
+    title = request.form.get("title")
+    author = request.form.get("author")
+    year = request.form.get("year")
+
+    if isbn != "":
+        if title != "":
+            if author != "":
+                if year != 0:
+                    books = db.execute("SELECT * FROM books").fetchall()
+
+
+    if title != "":
+        if author != "":
+            if year != 0:
+                books = db.execute("SELECT * FROM books").fetchall()
+
+    if author != "":
+        if year != 0:
+            books = db.execute("SELECT * FROM books").fetchall()
+
+    if year != 0:
+        books = db.execute("SELECT * FROM books").fetchall()
 
 
 @app.route("/register")
