@@ -31,7 +31,7 @@ def login():
 @app.route("/home", methods=["post"])
 def home():
     accounts = db.execute("SELECT * FROM accounts").fetchall()
-    books = db.execute("SELECT * FROM books ORDER BY title ASC LIMIT 10").fetchall()
+    books = db.execute("SELECT * FROM books ORDER BY title ASC LIMIT 50").fetchall()
 
     #Get the data account
     user = request.form.get("user")
@@ -50,58 +50,46 @@ def home():
 def search():
 
     title = request.form.get("title")
+    titleUpper = "%"+title.title()+"%"
+    titleLower = "%"+title.lower()+"%"
     author = request.form.get("author")
+    authorUpper = "%"+author.title()+"%"
     year = request.form.get("year")
     isbn = request.form.get("isbn")
 
     if title != "":
         if author != "":
             if year != "":
-                if isbn != 0:
-                    title1 = "%"+title+"%"
-                    title2 = "%"+title.capitalize()+"%"
-                    author1 = "%"+author.capitalize()+"%"
-                    books = db.execute("SELECT * FROM books WHERE (title LIKE :title1 OR title LIKE :title2) AND author LIKE :author AND year = :year AND isbn = :isbn LIMIT 10",{"title1": title, "title2": title2, "author": author1, "year": year, "isbn": isbn}).fetchall()
+                if isbn != "":
+                    books = db.execute("SELECT * FROM books WHERE (title LIKE :titleUpper OR title LIKE :titleLower) AND author LIKE :author AND year = :year AND isbn = :isbn LIMIT 50",{"titleUpper": titleUpper, "titleLower": titleLower, "author": authorUpper, "year": year, "isbn": isbn}).fetchall()
                     return render_template("home.html", username=username, books=books, title=title, author=author, year=year, isbn=isbn)
-                title1 = "%"+title+"%"
-                title2 = "%"+title.capitalize()+"%"
-                author1 = "%"+author.capitalize()+"%"
-                books = db.execute("SELECT * FROM books WHERE (title LIKE :title1 OR title LIKE :title2) AND author LIKE :author AND year = :year LIMIT 10",{"title1": title, "title2": title2, "author": author1, "year": year}).fetchall()
+                books = db.execute("SELECT * FROM books WHERE (title LIKE :titleUpper OR title LIKE :titleLower) AND author LIKE :author AND year = :year LIMIT 50",{"titleUpper": titleUpper, "titleLower": titleLower, "author": authorUpper, "year": year}).fetchall()
                 return render_template("home.html", username=username, books=books, title=title, author=author, year=year)
-            title1 = "%"+title+"%"
-            title2 = "%"+title.capitalize()+"%"
-            author1 = "%"+author.capitalize()+"%"
-            books = db.execute("SELECT * FROM books WHERE (title LIKE :title1 OR title LIKE :title2) AND author LIKE :author LIMIT 10",{"title1": title, "title2": title2, "author": author1}).fetchall()
+            books = db.execute("SELECT * FROM books WHERE (title LIKE :titleUpper OR title LIKE :titleLower) AND author LIKE :author LIMIT 50",{"titleUpper": titleUpper, "titleLower": titleLower, "author": authorUpper}).fetchall()
             return render_template("home.html", username=username, books=books, title=title, author=author)
-        title1 = "%"+title+"%"
-        title2 = "%"+title.capitalize()+"%"
-        books = db.execute("SELECT * FROM books WHERE title LIKE :title1 OR title LIKE :title2 LIMIT 10",{"title1": title, "title2":title2}).fetchall()
+        books = db.execute("SELECT * FROM books WHERE (title LIKE :titleUpper OR title LIKE :titleLower LIMIT 50)",{"titleUpper": titleUpper, "titleLower": titleLower}).fetchall()
         return render_template("home.html", username=username, books=books, title=title)
 
 
     if author != "":
         if year != "":
-            if isbn != 0:
-                author1 = "%"+author.capitalize()+"%"
-                books = db.execute("SELECT * FROM books WHERE author LIKE :author AND year = :year AND isbn = :isbn", {"author": author1, "year": year, "isbn": isbn}).fetchall()
+            if isbn != "":
+                books = db.execute("SELECT * FROM books WHERE author LIKE :author AND year = :year AND isbn = :isbn LIMIT 50", {"author": authorUpper, "year": year, "isbn": isbn}).fetchall()
                 return render_template("home.html", username=username, books=books, author=author, year=year, isbn=isbn)
-            author1 = "%"+author.capitalize()+"%"
-            books = db.execute("SELECT * FROM books WHERE author LIKE :author AND year = :year", {"author": author1, "year": year}).fetchall()
+            books = db.execute("SELECT * FROM books WHERE author LIKE :author AND year = :year LIMIT 50", {"author": authorUpper, "year": year}).fetchall()
             return render_template("home.html", username=username, books=books, author=author, year=year)
-        author1 = "%"+author.capitalize()+"%"
-        books = db.execute("SELECT * FROM books WHERE author LIKE :author", {"author": author1}).fetchall()
+        books = db.execute("SELECT * FROM books WHERE author LIKE :author LIMIT 50", {"author": authorUpper}).fetchall()
         return render_template("home.html", username=username, books=books, author=author)
 
     if year != "":
-        if isbn != 0:
-            books = db.execute("SELECT * FROM books WHERE year = :year AND isbn = :isbn", {"year": year, "isbn": isbn}).fetchall()
+        if isbn != "":
+            books = db.execute("SELECT * FROM books WHERE year = :year AND isbn = :isbn LIMIT 50", {"year": year, "isbn": isbn}).fetchall()
             return render_template("home.html", username=username, books=books, year=year, isbn=isbn)
-        year = int(year)
-        books = db.execute("SELECT * FROM books WHERE year = :year", {"year": year}).fetchall()
+        books = db.execute("SELECT * FROM books WHERE year = :year LIMIT 50", {"year": year}).fetchall()
         return render_template("home.html", username=username, books=books, year=year)
 
-    if isbn != 0:
-        books = db.execute("SELECT * FROM books WHERE isbn = :isbn", {"isbn": isbn}).fetchall()
+    if isbn != "":
+        books = db.execute("SELECT * FROM books WHERE isbn = :isbn LIMIT 50", {"isbn": isbn}).fetchall()
         return render_template("home.html", username=username, books=books, isbn=isbn)
 
 
