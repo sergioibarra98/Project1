@@ -1,12 +1,16 @@
-import os
+import os, requests
 
 from flask import Flask, session, render_template, request
 from flask_session import Session
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
 
-user_id = -1
-username= ""
+class User:
+    def __init__(self, id, username):
+        self.id = id
+        self.username = username
+
+user = User(-1,"")
 
 app = Flask(__name__)
 
@@ -25,24 +29,23 @@ db = scoped_session(sessionmaker(bind=engine))
 
 
 @app.route("/")
-def login():
+def index():
     return render_template("login.html")
 
 @app.route("/home", methods=["post"])
-def home():
-    accounts = db.execute("SELECT * FROM accounts").fetchall()
+def login():
     books = db.execute("SELECT * FROM books ORDER BY title ASC LIMIT 50").fetchall()
+    accounts = db.execute("SELECT * FROM accounts").fetchall()
 
     #Get the data account
-    user = request.form.get("user")
-    password = request.form.get("password")
-    page = 0
+    user_form = request.form.get("user")
+    password_form = request.form.get("password")
 
     for account in accounts:
-        if ((account.email==user or account.username==user) and account.password==password):
-            user_id=account.id
-            username=account.username
-            return render_template("home.html", username=username, books=books)
+        if ((account.email==user_form or account.username==user_form) and account.password==password_form):
+            user.id = account.id
+            user.username = account.username
+            return render_template("home.html", username=user.username, books=books)
 
     return render_template("alert.html", message="User or password incorrect")
 
@@ -54,44 +57,88 @@ def search():
     titleLower = "%"+title.lower()+"%"
     author = request.form.get("author")
     authorUpper = "%"+author.title()+"%"
-    year = request.form.get("year")
+    try:
+        year = int(request.form.get("year"))
+    except:
+        year = 0
     isbn = request.form.get("isbn")
 
     if title != "":
         if author != "":
-            if year != "":
+            if year != 0:
                 if isbn != "":
+                    if db.execute("SELECT * FROM books WHERE (title LIKE :titleUpper OR title LIKE :titleLower) AND author LIKE :author AND year = :year AND isbn = :isbn",{"titleUpper": titleUpper, "titleLower": titleLower, "author": authorUpper, "year": year, "isbn": isbn}).rowcount == 0:
+                        return render_template("alert.html", code="No book found :(", message="Plese, chech your search!")
                     books = db.execute("SELECT * FROM books WHERE (title LIKE :titleUpper OR title LIKE :titleLower) AND author LIKE :author AND year = :year AND isbn = :isbn LIMIT 50",{"titleUpper": titleUpper, "titleLower": titleLower, "author": authorUpper, "year": year, "isbn": isbn}).fetchall()
-                    return render_template("home.html", username=username, books=books, title=title, author=author, year=year, isbn=isbn)
+                    return render_template("home.html", username=user.username, books=books, title=title, author=author, year=year, isbn=isbn)
+                if db.execute("SELECT * FROM books WHERE (title LIKE :titleUpper OR title LIKE :titleLower) AND author LIKE :author AND year = :year",{"titleUpper": titleUpper, "titleLower": titleLower, "author": authorUpper, "year": year}).rowcount == 0:
+                    return render_template("alert.html", code="No book found :(", message="Plese, chech your search!")
                 books = db.execute("SELECT * FROM books WHERE (title LIKE :titleUpper OR title LIKE :titleLower) AND author LIKE :author AND year = :year LIMIT 50",{"titleUpper": titleUpper, "titleLower": titleLower, "author": authorUpper, "year": year}).fetchall()
-                return render_template("home.html", username=username, books=books, title=title, author=author, year=year)
+                return render_template("home.html", username=user.username, books=books, title=title, author=author, year=year)
+            if db.execute("SELECT * FROM books WHERE (title LIKE :titleUpper OR title LIKE :titleLower) AND author LIKE :author",{"titleUpper": titleUpper, "titleLower": titleLower, "author": authorUpper}).rowcount == 0:
+                return render_template("alert.html", code="No book found :(", message="Plese, chech your search!")
             books = db.execute("SELECT * FROM books WHERE (title LIKE :titleUpper OR title LIKE :titleLower) AND author LIKE :author LIMIT 50",{"titleUpper": titleUpper, "titleLower": titleLower, "author": authorUpper}).fetchall()
-            return render_template("home.html", username=username, books=books, title=title, author=author)
-        books = db.execute("SELECT * FROM books WHERE (title LIKE :titleUpper OR title LIKE :titleLower LIMIT 50)",{"titleUpper": titleUpper, "titleLower": titleLower}).fetchall()
-        return render_template("home.html", username=username, books=books, title=title)
-
+            return render_template("home.html", username=user.username, books=books, title=title, author=author)
+        if db.execute("SELECT * FROM books WHERE (title LIKE :titleUpper OR title LIKE :titleLower)",{"titleUpper": titleUpper, "titleLower": titleLower}).rowcount == 0:
+            return render_template("alert.html", code="No book found :(", message="Plese, chech your search!")
+        books = db.execute("SELECT * FROM books WHERE title LIKE :titleUpper OR title LIKE :titleLower LIMIT 50",{"titleUpper": titleUpper, "titleLower": titleLower}).fetchall()
+        return render_template("home.html", username=user.username, books=books, title=title)
 
     if author != "":
-        if year != "":
+        if year != 0:
             if isbn != "":
+                if db.execute("SELECT * FROM books WHERE author LIKE :author AND year = :year AND isbn = :isbn", {"author": authorUpper, "year": year, "isbn": isbn}).rowcount == 0:
+                    return render_template("alert.html", code="No book found :(", message="Plese, chech your search!")
                 books = db.execute("SELECT * FROM books WHERE author LIKE :author AND year = :year AND isbn = :isbn LIMIT 50", {"author": authorUpper, "year": year, "isbn": isbn}).fetchall()
-                return render_template("home.html", username=username, books=books, author=author, year=year, isbn=isbn)
+                return render_template("home.html", username=user.username, books=books, author=author, year=year, isbn=isbn)
+            if db.execute("SELECT * FROM books WHERE author LIKE :author AND year = :year", {"author": authorUpper, "year": year}).rowcount == 0:
+                return render_template("alert.html", code="No book found :(", message="Plese, chech your search!")
             books = db.execute("SELECT * FROM books WHERE author LIKE :author AND year = :year LIMIT 50", {"author": authorUpper, "year": year}).fetchall()
-            return render_template("home.html", username=username, books=books, author=author, year=year)
+            return render_template("home.html", username=user.username, books=books, author=author, year=year)
+        if db.execute("SELECT * FROM books WHERE author LIKE :author", {"author": authorUpper}).rowcount == 0:
+            return render_template("alert.html", code="No book found :(", message="Plese, chech your search!")
         books = db.execute("SELECT * FROM books WHERE author LIKE :author LIMIT 50", {"author": authorUpper}).fetchall()
-        return render_template("home.html", username=username, books=books, author=author)
+        return render_template("home.html", username=user.username, books=books, author=author)
 
-    if year != "":
+    if year != 0:
         if isbn != "":
+            if db.execute("SELECT * FROM books WHERE year = :year AND isbn = :isbn LIMIT 50", {"year": year, "isbn": isbn}).rowcount == 0:
+                return render_template("alert.html", code="No book found :(", message="Plese, chech your search!")
             books = db.execute("SELECT * FROM books WHERE year = :year AND isbn = :isbn LIMIT 50", {"year": year, "isbn": isbn}).fetchall()
-            return render_template("home.html", username=username, books=books, year=year, isbn=isbn)
+            return render_template("home.html", username=user.username, books=books, year=year, isbn=isbn)
+        if db.execute("SELECT * FROM books WHERE year = :year LIMIT 50", {"year": year}).rowcount == 0:
+            return render_template("alert.html", code="No book found :(", message="Plese, chech your search!")
         books = db.execute("SELECT * FROM books WHERE year = :year LIMIT 50", {"year": year}).fetchall()
-        return render_template("home.html", username=username, books=books, year=year)
+        return render_template("home.html", username=user.username, books=books, year=year)
 
     if isbn != "":
+        if db.execute("SELECT * FROM books WHERE isbn = :isbn LIMIT 50", {"isbn": isbn}).rowcount == 0:
+            return render_template("alert.html", code="No book found :(", message="Plese, chech your search!")
         books = db.execute("SELECT * FROM books WHERE isbn = :isbn LIMIT 50", {"isbn": isbn}).fetchall()
-        return render_template("home.html", username=username, books=books, isbn=isbn)
+        return render_template("home.html", username=user.username, books=books, isbn=isbn)
 
+    if (title == "" and author == "" and year == 0 and isbn == ""):
+        books = db.execute("SELECT * FROM books ORDER BY title ASC LIMIT 50").fetchall()
+        return render_template("home.html", username=user.username, books=books)
+    return render_template("alert.html",code = "Not Found", message = "Sorry there isn't any book :(")
+
+@app.route("/book/<isbn>", methods=["GET", "POST"])
+def book(isbn):
+    book = db.execute("SELECT * FROM books WHERE isbn = :isbn",{"isbn": isbn}).fetchone()
+    res = requests.get("https://www.goodreads.com/book/review_counts.json", params={"key": "10r5mLk1uqbZHS6RUJqRQ", "isbns": isbn})
+    res = res.json()
+
+    if db.execute("SELECT * FROM reviews WHERE isbn = :isbn", {"isbn":isbn}).rowcount > 0:
+        bookslanReview = db.execute("SELECT * FROM reviews WHERE isbn = :isbn", {"isbn":isbn}).rowcount
+        BookslandScore = db.execute("SELECT AVG(score) FROM reviews WHERE isbn = :isbn", {"isbn":isbn}).fetchone
+    else:
+        bookslanReview = 0
+        BookslandScore = "-"
+        
+    goodreadReview = res["books"][0]["work_ratings_count"]
+    goodreadScore = res["books"][0]["average_rating"]
+
+    return render_template("book.html",book=book, bookslanReview=bookslanReview, BookslandScore=BookslandScore, goodreadReview=goodreadReview, goodreadScore=goodreadScore)
 
 @app.route("/register")
 def register():

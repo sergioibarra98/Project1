@@ -1,0 +1,74 @@
+{% extends "layout.html" %}
+
+{% block title %}BooksLand{% endblock %}
+
+
+{% block body %}
+    <nav>
+        <div class="nav-wrapper teal lighten-2">
+            <a style="padding-left: 10px; font-weight: bold" class="brand-logo">BooksLand</a>
+            <ul id="nav-mobile" class="right hide-on-med-and-down">
+                <li><a style="font-weight: bold">{{username}}</a></li>
+                <li><a href="{{url_for('index')}}" style="font-weight: bold">Log out</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container grey lighten-4 z-depth-5">
+        <div class="row">
+            <div class="col l8 offset-l2">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Book</th>
+                            <th>Author</th>
+                            <th>year</th>
+                            <th>ISBN</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <td>{{book.title}}</td>
+                        <td>{{book.author}}</td>
+                        <td>{{book.year}}</td>
+                        <td>{{book.isbn}}</td>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col l4 offset-l1">
+                <table>
+                    <thead>
+                        <th>BooksLand</th>
+                        <th>Valorations</th>
+                        <th>SCORE</th>
+                    </thead>
+                    <tbody>
+                        <td>{{book.title}}</td>
+                        <td>{{bookslanReview}}</td>
+                        <td>{{BookslandScore}}</td>
+                    </tbody>
+                </table>
+            </div>
+            <div class="col l4 offset-l2">
+                <table>
+                    <thead>
+                        <th>Goodreads</th>
+                        <th>Valorations</th>
+                        <th>SCORE</th>
+                    </thead>
+                    <tbody>
+                        <td>{{book.title}}</td>
+                        <td>{{goodreadReview}}</td>
+                        <td>{{goodreadScore}}</td>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="row">
+            <a class="waves-effect waves-light btn teal darken-1" href="javascript:history.back()"><i class="material-icons right">send</i>RETURN</a>
+        </div>
+    </div>
+{% endblock %}
