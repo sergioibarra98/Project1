@@ -124,21 +124,46 @@ def search():
 
 @app.route("/book/<isbn>", methods=["GET", "POST"])
 def book(isbn):
-    book = db.execute("SELECT * FROM books WHERE isbn = :isbn",{"isbn": isbn}).fetchone()
-    res = requests.get("https://www.goodreads.com/book/review_counts.json", params={"key": "10r5mLk1uqbZHS6RUJqRQ", "isbns": isbn})
-    res = res.json()
+    #Reviews for this book
+    reviews = db.execute("SELECT username, valoration, score FROM accounts JOIN reviews ON reviews.user_id = accounts.id WHERE isbn = :isbn", {"isbn": isbn})
 
+    #Edit a valoration
+    if (request.method == "POST" and (db.execute("SELECT * FROM reviews WHERE isbn = :isbn AND user_id = :user_id", {"isbn": isbn, "user_id": user.id}).rowcount==1)):
+        valoration = request.form.get("valoration")
+        score = request.form.get("score")
+        db.execute("UPDATE reviews SET valoration = :valoration, score = :score WHERE isbn = :isbn AND user_id = :user_id",{"valoration": valoration, "score": score,"isbn": isbn, "user_id": user.id})
+        db.commit()
+
+    #Create a valoration
+    if (request.method == "POST" and (db.execute("SELECT * FROM reviews WHERE isbn = :isbn AND user_id = :user_id", {"isbn": isbn, "user_id": user.id}).rowcount==0)):
+        valoration = request.form.get("valoration")
+        score = request.form.get("score")
+        db.execute("INSERT INTO reviews (user_id, isbn, valoration, score) VALUES (:user_id, :isbn, :valoration, :score)", {"user_id":user.id, "isbn":isbn, "valoration": valoration, "score":score})
+        db.commit()
+
+    #Valorations BooksLand
+    book = db.execute("SELECT * FROM books WHERE isbn = :isbn",{"isbn": isbn}).fetchone()
     if db.execute("SELECT * FROM reviews WHERE isbn = :isbn", {"isbn":isbn}).rowcount > 0:
         bookslanReview = db.execute("SELECT * FROM reviews WHERE isbn = :isbn", {"isbn":isbn}).rowcount
-        BookslandScore = db.execute("SELECT AVG(score) FROM reviews WHERE isbn = :isbn", {"isbn":isbn}).fetchone
+        BookslandScore = db.execute("SELECT AVG(score) FROM reviews WHERE isbn = :isbn", {"isbn":isbn}).fetchone()
+        BookslandScore = str(BookslandScore[0])
+        BookslandScore = BookslandScore[0]+BookslandScore[1]+BookslandScore[2]+BookslandScore[3]
     else:
         bookslanReview = 0
         BookslandScore = "-"
-        
+
+    #Valorations Goodreads
+    res = requests.get("https://www.goodreads.com/book/review_counts.json", params={"key": "10r5mLk1uqbZHS6RUJqRQ", "isbns": isbn})
+    res = res.json()
     goodreadReview = res["books"][0]["work_ratings_count"]
     goodreadScore = res["books"][0]["average_rating"]
 
-    return render_template("book.html",book=book, bookslanReview=bookslanReview, BookslandScore=BookslandScore, goodreadReview=goodreadReview, goodreadScore=goodreadScore)
+    #Check if you have written a review yet
+    if db.execute("SELECT * FROM reviews WHERE isbn = :isbn AND user_id = :user_id", {"isbn": isbn, "user_id": user.id}).rowcount>0:
+        userReview = db.execute("SELECT * FROM reviews WHERE isbn = :isbn AND user_id = :user_id", {"isbn": isbn, "user_id": user.id}).fetchone()
+        return render_template("book.html", reviews=reviews, username=user.username, book=book, isbn=isbn, bookslanReview=bookslanReview, BookslandScore=BookslandScore, goodreadReview=goodreadReview, goodreadScore=goodreadScore, valoration_user=userReview.valoration, score_user=userReview.score)
+
+    return render_template("book.html", reviews=reviews, username=user.username, book=book, isbn=isbn, bookslanReview=bookslanReview, BookslandScore=BookslandScore, goodreadReview=goodreadReview, goodreadScore=goodreadScore, valoration_user="", score_user="")
 
 @app.route("/register")
 def register():

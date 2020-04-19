@@ -14,9 +14,9 @@
         </div>
     </nav>
 
-    <div class="container grey lighten-4 z-depth-5">
+    <div class="container grey lighten-4 z-depth-5" style="margin-top: 10px; paddin: 5px">
         <div class="row">
-            <div class="col l8 offset-l2">
+            <div class="col s12 l8 offset-l2">
                 <table>
                     <thead>
                         <tr>
@@ -37,8 +37,8 @@
         </div>
 
         <div class="row">
-            <div class="col l4 offset-l1">
-                <table>
+            <div class="col s12 l4 offset-l1">
+                <table class="centered">
                     <thead>
                         <th>BooksLand</th>
                         <th>Valorations</th>
@@ -51,8 +51,8 @@
                     </tbody>
                 </table>
             </div>
-            <div class="col l4 offset-l2">
-                <table>
+            <div class="col s12 l4 offset-l2">
+                <table class="centered">
                     <thead>
                         <th>Goodreads</th>
                         <th>Valorations</th>
@@ -68,7 +68,74 @@
         </div>
 
         <div class="row">
-            <a class="waves-effect waves-light btn teal darken-1" href="javascript:history.back()"><i class="material-icons right">send</i>RETURN</a>
+            <form class="" action="{{url_for('book',isbn = isbn)}}" method="post">
+                <div class="col s12 l5 offset-l2">
+                    <div class="input-field" style="margin-top: 40px">
+                        <i class="material-icons prefix">feedback</i>
+                        <input name="valoration" placeholder="Write a review (optional)" id="icon_prefix" type="text" class="validate" value="{{valoration_user}}">
+                    </div>
+                </div>
+                {% if valoration_user == "" %}
+                <div class="col s2 l1" style="margin-top: 20px">
+                    <label>Score</label>
+                    <select name="score" class="browser-default">
+                        <option disabled selected>Score</option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                    </select>
+                </div>
+                <div class="col s4 l2" style="margin-top: 47px">
+                    <button class="waves-effect waves-light btn teal darken-1"><i class="material-icons left">add</i>Add</button>
+                </div>
+                {% else %}
+                <div class="col s2 l1" style="margin-top: 20px">
+                    <label>Score</label>
+                    <select name="score" class="browser-default">
+                        <option disabled selected>Score</option>
+                        {% for i in range(5) %}
+                            {% if (i+1) == score_user %}
+                            <option value="{{i+1}}" selected>{{i+1}}</option>
+                            {% else %}
+                            <option value="{{i+1}}">{{i+1}}</option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col s4 l2" style="margin-top: 47px">
+                    <button class="waves-effect waves-light btn teal darken-1"><i class="material-icons left">edit</i>edit</button>
+                </div>
+                {% endif %}
+            </form>
+        </div>
+
+        <div class="row">
+            <div class="col s12 l8 offset-l2">
+                <table>
+                    <thead>
+                        <th>User</th>
+                        <th>Valoration</th>
+                        <th class="center-align">Score</th>
+                    </thead>
+                    <tbody>
+                        {% for review in reviews %}
+                        <tr>
+                            <td>{{review.username}}</td>
+                            <td>{{review.valoration}}</td>
+                            <td class="center-align">{{review.score}}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col" style="margin-top: -10px">
+                <a class="waves-effect waves-light btn teal darken-1" href="javascript:history.back()"><i class="material-icons left">keyboard_backspace</i>RETURN</a>
+            </div>
         </div>
     </div>
 {% endblock %}
