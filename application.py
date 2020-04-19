@@ -1,6 +1,6 @@
 import os, requests
 
-from flask import Flask, session, render_template, request
+from flask import Flask, session, render_template, request, jsonify
 from flask_session import Session
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
@@ -49,19 +49,25 @@ def login():
 
     return render_template("alert.html", message="User or password incorrect")
 
-@app.route("/home/search", methods=["post"])
+@app.route("/home/search", methods=["GET", "POST"])
 def search():
+    if request.method == "POST":
+        title = request.form.get("title")
+        titleUpper = "%"+title.title()+"%"
+        titleLower = "%"+title.lower()+"%"
+        author = request.form.get("author")
+        authorUpper = "%"+author.title()+"%"
+        try:
+            year = int(request.form.get("year"))
+        except:
+            year = 0
+        isbn = request.form.get("isbn")
 
-    title = request.form.get("title")
-    titleUpper = "%"+title.title()+"%"
-    titleLower = "%"+title.lower()+"%"
-    author = request.form.get("author")
-    authorUpper = "%"+author.title()+"%"
-    try:
-        year = int(request.form.get("year"))
-    except:
+    else:
+        title = ""
+        author = ""
         year = 0
-    isbn = request.form.get("isbn")
+        isbn = ""
 
     if title != "":
         if author != "":
@@ -120,13 +126,10 @@ def search():
     if (title == "" and author == "" and year == 0 and isbn == ""):
         books = db.execute("SELECT * FROM books ORDER BY title ASC LIMIT 50").fetchall()
         return render_template("home.html", username=user.username, books=books)
-    return render_template("alert.html",code = "Not Found", message = "Sorry there isn't any book :(")
+    return render_template("alert.html",code = "Not Found", message = "Sorry there isn't any book :("), 404
 
 @app.route("/book/<isbn>", methods=["GET", "POST"])
 def book(isbn):
-    #Reviews for this book
-    reviews = db.execute("SELECT username, valoration, score FROM accounts JOIN reviews ON reviews.user_id = accounts.id WHERE isbn = :isbn", {"isbn": isbn})
-
     #Edit a valoration
     if (request.method == "POST" and (db.execute("SELECT * FROM reviews WHERE isbn = :isbn AND user_id = :user_id", {"isbn": isbn, "user_id": user.id}).rowcount==1)):
         valoration = request.form.get("valoration")
@@ -140,6 +143,9 @@ def book(isbn):
         score = request.form.get("score")
         db.execute("INSERT INTO reviews (user_id, isbn, valoration, score) VALUES (:user_id, :isbn, :valoration, :score)", {"user_id":user.id, "isbn":isbn, "valoration": valoration, "score":score})
         db.commit()
+
+    #Reviews for this book
+    reviews = db.execute("SELECT username, valoration, score FROM accounts JOIN reviews ON reviews.user_id = accounts.id WHERE isbn = :isbn", {"isbn": isbn})
 
     #Valorations BooksLand
     book = db.execute("SELECT * FROM books WHERE isbn = :isbn",{"isbn": isbn}).fetchone()
@@ -193,3 +199,30 @@ def checkRegister():
     db.execute("INSERT INTO accounts (email, username, password) VALUES (:email,:username, :password)",{"email":email, "username":username, "password":password})
     db.commit()
     return render_template("alert.html",code="Success", message="Everything OK, please go back and log in :D"), 201
+
+@app.route("/api/book/<isbn>")
+def book_api(isbn):
+    #Make sure book is in the database
+    book = db.execute("SELECT * FROM books WHERE isbn = :isbn", {"isbn": isbn}).fetchone()
+    if book is None:
+        return jsonify({"error": "ISBN isn't in the database"}), 422
+
+    if db.execute("SELECT * FROM reviews WHERE isbn = :isbn", {"isbn":isbn}).rowcount > 0:
+        review_count = db.execute("SELECT * FROM reviews WHERE isbn = :isbn", {"isbn":isbn}).rowcount
+        score = db.execute("SELECT * FROM reviews WHERE isbn = :isbn", {"isbn":isbn}).rowcount
+        score = db.execute("SELECT AVG(score) FROM reviews WHERE isbn = :isbn", {"isbn":isbn}).fetchone()
+        score = str(score[0])
+        score = float(score[0]+score[1]+score[2]+score[3])
+    else:
+        review_count = 0
+        score = "-"
+
+    count = db.execute("select")
+    return jsonify({
+        "title": book.title,
+        "author": book.author,
+        "year": book.year,
+        "isbn": book.isbn,
+        "review_count": review_count,
+        "score": score
+    })
